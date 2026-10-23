@@ -26,7 +26,6 @@
       margin-bottom: 35px;
     }
 
-    /* サイトのアイコンを表示するボックス（画像がある場合は画像を表示） */
     .site-icon-box {
       width: 70px;
       height: 70px;
@@ -381,11 +380,9 @@
 
 <div class="v1-container">
   <div class="site-header">
-    <!-- サイトのアイコン（ファビコン）を自動取得。失敗した場合はNO IMAGEのままになる -->
     <div class="site-icon-box" id="siteIconBox">
       <span>NO IMAGE</span>
     </div>
-    <!-- サイトのドメインが動的に入る場所 -->
     <h1 class="site-title" id="siteDomain">example.com</h1>
     <div class="site-desc">Verifying that you are human.</div>
   </div>
@@ -419,8 +416,7 @@
   <div class="footer-brand">
     <img src="logo.png" alt="Logo">
     <div class="name">ReFaceCapture</div>
-    <div class="catchcopy">あたりまえに続く平和な
-    ネット社会へ</div>
+    <div class="catchcopy">あたりまえに続くネット社会へ</div>
     <div class="company">アオリンゴ株式会社</div>
   </div>
 </div>
@@ -495,31 +491,23 @@
 </div>
 
 <script>
-  // --- ドメインとアイコンの自動取得処理 ---
+  // ドメインとアイコンの自動取得処理
   window.addEventListener('DOMContentLoaded', () => {
-    // 1. 現在のページのドメイン（ホスト名）を取得
     const currentDomain = window.location.hostname || "example.com";
-    
-    // 画面のドメイン表示を更新
     document.getElementById('siteDomain').textContent = currentDomain;
     document.getElementById('subNotice').textContent = `${currentDomain} needs to review the security of your connection before you access.`;
 
-    // 2. サイトのファビコン（アイコン）を自動で読み込む
     const iconBox = document.getElementById('siteIconBox');
     const faviconUrl = `${window.location.origin}/favicon.ico`;
-
     const img = new Image();
     img.src = faviconUrl;
-    
-    // ファビコンが存在して正常に読み込めた場合のみアイコンを差し替える
     img.onload = function() {
-      iconBox.innerHTML = ''; // 「NO IMAGE」を消す
-      iconBox.appendChild(img); // 画像を表示
+      iconBox.innerHTML = '';
+      iconBox.appendChild(img);
     };
-    // 読み込めなかった場合（ファビコンがない場合）は「NO IMAGE」のまま維持される
   });
 
-  // --- 認証・パズルの処理 ---
+  // 認証・パズル・API通信の処理
   let isVerified = false;
   const checkbox = document.getElementById('checkbox');
   const spinner = document.getElementById('spinner');
@@ -573,22 +561,48 @@
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(currentX, targetY, pieceSize, pieceSize);
     ctx.strokeStyle = '#333';
-    ctx.strokeRect(currentX, targetY, pieceSize, PieceSize = pieceSize);
+    ctx.strokeRect(currentX, targetY, pieceSize, pieceSize);
   }
 
   slider.addEventListener('input', (e) => {
     drawPuzzle(parseInt(e.target.value));
   });
 
-  function checkPuzzle() {
+  // パズルクリア時にバックエンドAPIへトークン発行を要求
+  async function checkPuzzle() {
     const userX = parseInt(slider.value, 10);
 
     if (Math.abs(userX - targetX) <= 5) {
       puzzleModal.style.display = 'none';
-      checkmark.style.display = 'block';
-      checkmark.classList.add('animate');
-      statusText.textContent = '人間であると確認されました';
-      isVerified = true;
+      spinner.style.display = 'block';
+      statusText.textContent = 'トークンを発行中...';
+
+      try {
+        const response = await fetch('/api/issue-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiKey: 'nakiron' })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          spinner.style.display = 'none';
+          checkmark.style.display = 'block';
+          checkmark.classList.add('animate');
+          statusText.textContent = '人間であると確認されました';
+          isVerified = true;
+          console.log('取得した検証トークン:', data.token);
+        } else {
+          throw new Error(data.message || '認証に失敗しました');
+        }
+      } catch (err) {
+        spinner.style.display = 'none';
+        checkbox.style.display = 'flex';
+        statusText.textContent = 'エラーが発生しました';
+        errorMsg.textContent = err.message;
+      }
+
     } else {
       errorMsg.textContent = '位置が正しくありません。もう一度やり直してください。';
       setTimeout(() => {
