@@ -26,7 +26,7 @@
       margin-bottom: 35px;
     }
 
-    /* サイトのアイコンを表示するボックス（画像がある場合は画像を表示） */
+    /* サイトのアイコンを表示するボックス */
     .site-icon-box {
       width: 70px;
       height: 70px;
@@ -54,6 +54,7 @@
       font-weight: bold;
       color: #111;
       margin: 0 0 10px 0;
+      word-break: break-all;
     }
 
     .site-desc {
@@ -381,11 +382,9 @@
 
 <div class="v1-container">
   <div class="site-header">
-    <!-- サイトのアイコン（ファビコン）を自動取得。失敗した場合はNO IMAGEのままになる -->
     <div class="site-icon-box" id="siteIconBox">
       <span>NO IMAGE</span>
     </div>
-    <!-- サイトのドメインが動的に入る場所 -->
     <h1 class="site-title" id="siteDomain">example.com</h1>
     <div class="site-desc">Verifying that you are human.</div>
   </div>
@@ -414,12 +413,12 @@
     </div>
   </div>
 
-  <div class="sub-notice" id="subNotice">example.com needs to review the security of your connection before you access.</div>
+  <div class="sub-notice" id="subNotice">example.com へアクセスする前に、接続のセキュリティを確認する必要があります。</div>
 
   <div class="footer-brand">
     <img src="logo.png" alt="Logo">
     <div class="name">ReFaceCapture</div>
-    <div class="catchcopy">あたりまえに続くネット社会へ</div>
+    <div class="catchcopy">あたりまえに続くネット平和な社会へ</div>
     <div class="company">アオリンゴ株式会社</div>
   </div>
 </div>
@@ -494,28 +493,40 @@
 </div>
 
 <script>
-  // --- ドメインとアイコンの自動取得処理 ---
-  window.addEventListener('DOMContentLoaded', () => {
-    // 1. 現在のページのドメイン（ホスト名）を取得
-    const currentDomain = window.location.hostname || "example.com";
-    
-    // 画面のドメイン表示を更新
-    document.getElementById('siteDomain').textContent = currentDomain;
-    document.getElementById('subNotice').textContent = `${currentDomain} needs to review the security of your connection before you access.`;
+  let targetRedirectUrl = "";
 
-    // 2. サイトのファビコン（アイコン）を自動で読み込む
+  // --- ドメインとリダイレクト先の自動取得処理 ---
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectParam = urlParams.get('redirect');
+
+    let displayDomain = window.location.hostname || "example.com";
+
+    if (redirectParam) {
+      try {
+        const parsedUrl = new URL(redirectParam);
+        targetRedirectUrl = parsedUrl.href;
+        displayDomain = parsedUrl.hostname;
+      } catch (e) {
+        console.error("Invalid redirect URL:", e);
+      }
+    }
+
+    document.getElementById('siteDomain').textContent = displayDomain;
+    document.getElementById('subNotice').textContent = `${displayDomain} へアクセスする前に、接続のセキュリティを確認する必要があります。`;
+
     const iconBox = document.getElementById('siteIconBox');
-    const faviconUrl = `${window.location.origin}/favicon.ico`;
+    const faviconUrl = redirectParam 
+      ? `https://www.google.com/s2/favicons?domain=${displayDomain}&sz=128`
+      : `${window.location.origin}/favicon.ico`;
 
     const img = new Image();
     img.src = faviconUrl;
     
-    // ファビコンが存在して正常に読み込めた場合のみアイコンを差し替える
     img.onload = function() {
-      iconBox.innerHTML = ''; // 「NO IMAGE」を消す
-      iconBox.appendChild(img); // 画像を表示
+      iconBox.innerHTML = '';
+      iconBox.appendChild(img);
     };
-    // 読み込めなかった場合（ファビコンがない場合）は「NO IMAGE」のまま維持される
   });
 
   // --- 認証・パズルの処理 ---
@@ -572,7 +583,7 @@
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(currentX, targetY, pieceSize, pieceSize);
     ctx.strokeStyle = '#333';
-    ctx.strokeRect(currentX, targetY, pieceSize, PieceSize = pieceSize);
+    ctx.strokeRect(currentX, targetY, pieceSize, pieceSize);
   }
 
   slider.addEventListener('input', (e) => {
@@ -588,6 +599,13 @@
       checkmark.classList.add('animate');
       statusText.textContent = '人間であると確認されました';
       isVerified = true;
+
+      // --- パズル成功時に指定URLへリダイレクトする処理 ---
+      if (targetRedirectUrl) {
+        setTimeout(() => {
+          window.location.href = targetRedirectUrl;
+        }, 1000);
+      }
     } else {
       errorMsg.textContent = '位置が正しくありません。もう一度やり直してください。';
       setTimeout(() => {
