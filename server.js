@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 開発中・テスト時のキャッシュトラブルを防ぐため、静的ファイルのキャッシュを完全に無効化する設定
+// 静的ファイルのキャッシュを無効化
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
   maxAge: 0,
@@ -20,6 +20,38 @@ const VALID_API_KEY = 'nakiron';
 
 // 発行されたトークンを一時記憶するメモリ
 const validTokens = new Set();
+
+// ルートアクセス時に redirect パラメータを処理して index.html を返す
+app.get('/', (req, res) => {
+  const redirectUrl = req.query.redirect;
+  let displayDomain = "example.com";
+  
+  if (redirectUrl) {
+    try {
+      const parsedUrl = new URL(redirectUrl);
+      displayDomain = parsedUrl.hostname;
+    } catch (e) {
+      console.error("Invalid redirect URL:", e);
+    }
+  }
+
+  // public/index.html を読み込んで、サーバー側でドメイン名を置換して返す
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  const fs = require('fs');
+  
+  fs.readFile(indexPath, 'utf8', (err, html) => {
+    if (err) {
+      return res.status(500).send('Internal Server Error');
+    }
+
+    // HTML内のプレースホルダーや初期ドメインを書き換える
+    let modifiedHtml = html
+      .replace(/id="siteDomain">[^<]*<\/h1>/, `id="siteDomain">${displayDomain}</h1>`)
+      .replace(/id="subNotice">[^<]*<\/div>/, `id="subNotice">${displayDomain} へアクセスする前に、接続のセキュリティを確認する必要があります。</div>`);
+
+    res.send(modifiedHtml);
+  });
+});
 
 // 1. パズル成功時にトークンを発行するAPI
 app.post('/api/issue-token', (req, res) => {
