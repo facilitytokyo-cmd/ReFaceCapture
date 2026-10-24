@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ReFaceNet 認証</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .v1-container {
+      max-width: 450px;
+      width: 100%;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .site-header {
+      margin-bottom: 35px;
+    }
+
+    /* サイトのアイコンを表示するボックス */
+    .site-icon-box {
+      width: 70px;
+      height: 70px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      font-size: 10px;
+      color: #666;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .site-icon-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .site-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #111;
+      margin: 0 0 10px 0;
+      word-break: break-all;
+    }
+
+    .site-desc {
+      font-size: 15px;
+      color: #333;
+      margin-bottom: 25px;
+    }
+
+    /* CAPTCHAボックス */
+    .recaptcha-box {
+      width: 380px;
+      height: 74px;
+      background-color: #ffffff;
+      border: 1px solid #dcdcdc;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      box-sizing: border-box;
+      user-select: none;
+      margin: 0 auto 20px auto;
+      text-align: left;
+    }
+
+    .left-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      white-space: nowrap;
+    }
+
+    .checkbox-container {
+      position: relative;
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #b6b6b6;
+      border-radius: 3px;
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s;
+    }
+
+    .checkbox:hover {
+      border-color: #888;
+    }
+
+    .spinner {
+      display: none;
+      width: 22px;
+      height: 22px;
+      border: 3px solid #e0e0e0;
+      border-top: 3px solid #2e7d32;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .checkmark {
+      display: none;
+      width: 24px;
+      height: 24px;
+    }
+
+    .checkmark path {
+      fill: none;
+      stroke: #2e7d32;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 24;
+      stroke-dashoffset: 24;
+    }
+
+    .checkmark.animate path {
+      animation: drawCheck 0.4s ease forwards;
+    }
+
+    @keyframes drawCheck {
+      to { stroke-dashoffset: 0; }
+    }
+
+    .label-text {
+      font-size: 14px;
+      color: #333;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+      margin-left: 12px;
+      flex-shrink: 0;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .brand-icon {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+    }
+
+    .brand-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      letter-spacing: -0.3px;
+    }
+
+    .links {
+      font-size: 10px;
+      color: #666;
+      white-space: nowrap;
+    }
+
+    .links a {
+      color: #555;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .links a:hover {
+      color: #000;
+    }
+
+    .sub-notice {
+      font-size: 13px;
+      color: #444;
+      margin-bottom: 45px;
+    }
+
+    .footer-brand img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+    }
+    .footer-brand .name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #111;
+      margin-top: 4px;
+    }
+    .footer-brand .catchcopy {
+      font-size: 11px;
+      color: #444;
+      margin-top: 2px;
+    }
+    .footer-brand .company {
+      font-size: 9px;
+      color: #777;
+      margin-top: 2px;
+    }
+
+    /* --- パズルモーダル --- */
+    .puzzle-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .puzzle-box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      width: 320px;
+      text-align: center;
+    }
+
+    .puzzle-header {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: #333;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 280px;
+      height: 140px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      margin: 0 auto 12px auto;
+      overflow: hidden;
+    }
+
+    #puzzleCanvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    input[type=range] {
+      width: 280px;
+      cursor: pointer;
+    }
+
+    .verify-btn {
+      margin-top: 12px;
+      padding: 8px 20px;
+      font-size: 13px;
+      background-color: #0051c3;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .error-msg {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #d93025;
+      font-weight: bold;
+      min-height: 16px;
+    }
+
+    /* --- ダイアログ共通 --- */
+    .info-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .info-box {
+      background: #fff;
+      width: 420px;
+      max-height: 80vh;
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      overflow: hidden;
+    }
+
+    .info-header {
+      padding: 15px 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 16px;
+      color: #222;
+    }
+
+    .close-x {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #777;
+    }
+
+    .info-body {
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 13px;
+      color: #444;
+      line-height: 1.6;
+    }
+
+    .info-body h3 {
+      font-size: 14px;
+      color: #111;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+
+    .info-body ul {
+      margin: 0 0 10px 20px;
+      padding: 0;
+    }
+
+    .info-footer {
+      padding: 12px 20px;
+      border-top: 1px solid #eee;
+      text-align: right;
+      background: #fdfdfd;
+    }
+
+    .close-btn {
+      padding: 6px 16px;
+      background: #f1f3f4;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #3c4043;
+    }
+    .close-btn:hover {
+      background: #e8eaed;
+    }
+  </style>
+</head>
+<body>
+
+<div class="v1-container">
+  <div class="site-header">
+    <div class="site-icon-box" id="siteIconBox">
+      <span>NO IMAGE</span>
+    </div>
+    <h1 class="site-title" id="siteDomain">example.com</h1>
+    <div class="site-desc">Verifying that you are human.</div>
+  </div>
+
+  <!-- 認証ボックス -->
+  <div class="recaptcha-box">
+    <div class="left-content">
+      <div class="checkbox-container">
+        <div class="checkbox" id="checkbox" onclick="openPuzzle()"></div>
+        <div class="spinner" id="spinner"></div>
+        <svg class="checkmark" id="checkmark" viewBox="0 0 24 24">
+          <path d="M4 12l6 6L20 6" />
+        </svg>
+      </div>
+      <span class="label-text" id="statusText">私はロボットではありません</span>
+    </div>
+
+    <div class="brand">
+      <div class="brand-header">
+        <img src="logo.png" alt="Logo" class="brand-icon">
+        <span class="brand-title">ReFaceCapture</span>
+      </div>
+      <div class="links">
+        <a onclick="openModal('privacyModal')">Privacy</a> ・ <a onclick="openModal('termsModal')">Terms</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-notice" id="subNotice">example.com へアクセスする前に、接続のセキュリティを確認する必要があります。</div>
+
+  <div class="footer-brand">
+    <img src="logo.png" alt="Logo">
+    <div class="name">ReFaceCapture</div>
+    <div class="catchcopy">あたりまえに続くネット平和な社会へ</div>
+    <div class="company">アオリンゴ株式会社</div>
+  </div>
+</div>
+
+<!-- パズルモーダル -->
+<div class="puzzle-modal" id="puzzleModal">
+  <div class="puzzle-box">
+    <div class="puzzle-header">スライダーを合致させて送信を押してください</div>
+    <div class="canvas-container">
+      <canvas id="puzzleCanvas" width="280" height="140"></canvas>
+    </div>
+    <input type="range" id="slider" min="0" max="220" value="0">
+    <div id="errorMsg" class="error-msg"></div>
+    <button class="verify-btn" onclick="checkPuzzle()">送信</button>
+  </div>
+</div>
+
+<!-- Privacy ダイアログ -->
+<div class="info-modal" id="privacyModal">
+  <div class="info-box">
+    <div class="info-header">
+      <span>プライバシーポリシー</span>
+      <button class="close-x" onclick="closeModal('privacyModal')">&times;</button>
+    </div>
+    <div class="info-body">
+      <p><strong>ReFaceNet プライバシーポリシー</strong></p>
+      <p>当サービスでは、ボットによる不正アクセスやスパムからウェブサイトを保護するために人間認証を提供しています。認証の過程において処理されるデータは、セキュリティ保護の目的以外には使用されません。</p>
+    </div>
+    <div class="info-footer">
+      <button class="close-btn" onclick="closeModal('privacyModal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Terms ダイアログ -->
+<div class="info-modal" id="termsModal">
+  <div class="info-box">
+    <div class="info-header">
+      <span>利用規約</span>
+      <button class="close-x" onclick="closeModal('termsModal')">&times;</button>
+    </div>
+    <div class="info-body">
+      <p><strong>ReFaceNet 利用規約</strong></p>
+      
+      <h3>第一条（目的）</h3>
+      <ol style="margin: 0 0 10px 18px; padding: 0;">
+        <li>本規約は、アオリンゴ株式会社（以下「当社」）が提供するインターネットセキュリティサービス「ReFaceNet」（以下「本サービス」）の利用に関する条件を定めるものです。</li>
+        <li>ユーザーは、本サービスの利用にあたり、本規約のすべてに同意したものとみなされます。</li>
+      </ol>
+
+      <h3>第二条（禁止行為）</h3>
+      <p>本サービスを次のようなことには利用しないでください。</p>
+      <ul>
+        <li>犯罪関連</li>
+        <li>スパム、誤解を招くことに使用</li>
+        <li>本システムを使ったウイルス投入</li>
+        <li>本サービスを不正に利用すること</li>
+        <li>本システムを破壊しようとすること</li>
+      </ul>
+
+      <h3>第三条（措置）</h3>
+      <p>もし、ユーザが規定や法令を守れないのであれば次のような措置が下されます。</p>
+      <ul>
+        <li>3日間のサービス利用停止</li>
+        <li>永久的の利用停止処分</li>
+      </ul>
+    </div>
+    <div class="info-footer">
+      <button class="close-btn" onclick="closeModal('termsModal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let targetRedirectUrl = "";
+
+  // --- ドメインとリダイレクト先の自動取得処理 ---
+  window.addEventListener('DOMContentLoaded', () => {
+    // 1. URLパラメータ (?redirect=https://...) を取得
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectParam = urlParams.get('redirect');
+
+    let displayDomain = window.location.hostname || "example.com";
+
+    if (redirectParam) {
+      try {
+        // パラメータに渡されたURLをパースする
+        const parsedUrl = new URL(redirectParam);
+        targetRedirectUrl = parsedUrl.href;
+        displayDomain = parsedUrl.hostname; // ドメイン名（例: www.smbc-card.com）を取得
+      } catch (e) {
+        console.error("Invalid redirect URL:", e);
+      }
+    }
+
+    // 画面のドメイン表示を更新
+    document.getElementById('siteDomain').textContent = displayDomain;
+    document.getElementById('subNotice').textContent = `${displayDomain} へアクセスする前に、接続のセキュリティを確認する必要があります。`;
+
+    // 2. アイコン（ファビコン）を取得
+    const iconBox = document.getElementById('siteIconBox');
+    const faviconUrl = redirectParam 
+      ? `https://www.google.com/s2/favicons?domain=${displayDomain}&sz=128`
+      : `${window.location.origin}/favicon.ico`;
+
+    const img = new Image();
+    img.src = faviconUrl;
+    
+    img.onload = function() {
+      iconBox.innerHTML = '';
+      iconBox.appendChild(img);
+    };
+  });
+
+  // --- 認証・パズルの処理 ---
+  let isVerified = false;
+  const checkbox = document.getElementById('checkbox');
+  const spinner = document.getElementById('spinner');
+  const checkmark = document.getElementById('checkmark');
+  const statusText = document.getElementById('statusText');
+  const puzzleModal = document.getElementById('puzzleModal');
+  const canvas = document.getElementById('puzzleCanvas');
+  const ctx = canvas.getContext('2d');
+  const slider = document.getElementById('slider');
+  const errorMsg = document.getElementById('errorMsg');
+
+  let targetX = 0;
+  const targetY = 45;
+  const pieceSize = 45;
+
+  function openPuzzle() {
+    if (isVerified) return;
+
+    checkbox.style.display = 'none';
+    spinner.style.display = 'block';
+    statusText.textContent = '確認中...';
+
+    setTimeout(() => {
+      spinner.style.display = 'none';
+      puzzleModal.style.display = 'flex';
+      initPuzzle();
+    }, 600);
+  }
+
+  function initPuzzle() {
+    targetX = Math.floor(Math.random() * 120) + 90;
+    slider.value = 0;
+    errorMsg.textContent = '';
+    drawPuzzle(0);
+  }
+
+  function drawPuzzle(currentX) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let grad = ctx.createLinearGradient(0, 0, 280, 140);
+    grad.addColorStop(0, '#36d1dc');
+    grad.addColorStop(1, '#5b86e5');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(targetX, targetY, pieceSize, pieceSize);
+    ctx.strokeStyle = '#fff';
+    ctx.strokeRect(targetX, targetY, pieceSize, pieceSize);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(currentX, targetY, pieceSize, pieceSize);
+    ctx.strokeStyle = '#333';
+    ctx.strokeRect(currentX, targetY, pieceSize, pieceSize);
+  }
+
+  slider.addEventListener('input', (e) => {
+    drawPuzzle(parseInt(e.target.value));
+  });
+
+  function checkPuzzle() {
+    const userX = parseInt(slider.value, 10);
+
+    if (Math.abs(userX - targetX) <= 5) {
+      puzzleModal.style.display = 'none';
+      checkmark.style.display = 'block';
+      checkmark.classList.add('animate');
+      statusText.textContent = '人間であると確認されました';
+      isVerified = true;
+
+      // リダイレクト処理（指定があれば飛ぶ）
+      if (targetRedirectUrl) {
+        setTimeout(() => {
+          window.location.href = targetRedirectUrl;
+        }, 1200);
+      }
+    } else {
+      errorMsg.textContent = '位置が正しくありません。もう一度やり直してください。';
+      setTimeout(() => {
+        initPuzzle();
+      }, 1000);
+    }
+  }
+
+  function openModal(modalId) {
+    document.getElementById(modalId).style.display = 'flex';
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+  }
+</script>
+
+</body>
+</html>
