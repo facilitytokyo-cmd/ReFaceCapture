@@ -397,24 +397,46 @@
 
     .warning-btn-group {
       display: flex;
-      gap: 120px;
+      gap: 40px;
       justify-content: center;
       align-items: center;
     }
 
     .btn-yes, .btn-no {
-      background: none;
-      border: none;
-      font-size: 24px;
+      padding: 12px 40px;
+      font-size: 18px;
       font-weight: bold;
-      color: #000;
+      border-radius: 6px;
       cursor: pointer;
-      padding: 8px 24px;
-      transition: opacity 0.2s;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
-    .btn-yes:hover, .btn-no:hover {
-      opacity: 0.6;
+    /* 「はい」ボタン（アクセス続行） */
+    .btn-yes {
+      background-color: #0051c3;
+      color: #ffffff;
+      border: 1px solid #0051c3;
+    }
+
+    .btn-yes:hover {
+      background-color: #003d99;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,81,195,0.3);
+    }
+
+    /* 「いいえ」ボタン（Googleへ離脱） */
+    .btn-no {
+      background-color: #f1f3f4;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+    }
+
+    .btn-no:hover {
+      background-color: #e8eaed;
+      color: #111;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
 
     /* --- ダイアログ共通 --- */
@@ -712,7 +734,7 @@
     };
   }
 
-  // 「はい」が押された場合：認証画面へ進む
+  // 「はい」が押された場合：警告を閉じて通常の認証画面へ進む
   function proceedToAuth() {
     document.getElementById('adultWarningModal').style.display = 'none';
     initMainAuthPage();
