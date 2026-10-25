@@ -328,28 +328,6 @@
       filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
     }
 
-    /* --- エラー画面（404等） --- */
-    .error-page {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: #ffffff;
-      z-index: 4000;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    .error-page img {
-      max-width: 100%;
-      width: 600px;
-      height: auto;
-      object-fit: contain;
-    }
-
     /* --- ダイアログ共通 --- */
     .info-modal {
       display: none;
@@ -505,11 +483,6 @@
   </div>
 </div>
 
-<!-- エラー画面（error.png表示用） -->
-<div class="error-page" id="errorPage">
-  <img src="error.png" alt="Error 404">
-</div>
-
 <!-- Privacy ダイアログ -->
 <div class="info-modal" id="privacyModal">
   <div class="info-box">
@@ -582,20 +555,9 @@
         const parsedUrl = new URL(redirectParam);
         targetRedirectUrl = parsedUrl.href;
         displayDomain = parsedUrl.hostname;
-
-        // 【新機能】存在しないような適当すぎるドメイン（TLDがない、またはドットを含まないなど）の場合にエラー画面を表示する例
-        if (!displayDomain.includes('.') || displayDomain.endsWith('.')) {
-          showErrorPage();
-          return;
-        }
-
       } catch (e) {
         console.error("Invalid redirect URL:", e);
-        showErrorPage();
-        return;
       }
-    } else {
-      // redirectパラメータ自体がない場合もエラーにするならここで showErrorPage() を呼べます
     }
 
     document.getElementById('siteDomain').textContent = displayDomain;
@@ -614,11 +576,6 @@
       iconBox.appendChild(img);
     };
   });
-
-  // エラー画面を表示する関数
-  function showErrorPage() {
-    document.getElementById('errorPage').style.display = 'flex';
-  }
 
   // --- 認証・パズルの処理 ---
   let isVerified = false;
