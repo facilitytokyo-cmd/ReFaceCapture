@@ -295,6 +295,39 @@
       min-height: 16px;
     }
 
+    /* --- リダイレクト中ローディング画面 --- */
+    .redirect-loading-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #ffffff;
+      z-index: 3000;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .redirect-title {
+      font-size: 26px;
+      font-weight: bold;
+      color: #111;
+      margin-bottom: 8px;
+    }
+
+    .redirect-sub {
+      font-size: 14px;
+      color: #444;
+      line-height: 1.5;
+      margin-bottom: 25px;
+    }
+
+    .redirect-character img {
+      max-width: 220px;
+      height: auto;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+    }
+
     /* --- ダイアログ共通 --- */
     .info-modal {
       display: none;
@@ -436,6 +469,20 @@
   </div>
 </div>
 
+<!-- リダイレクト中ローディング画面 -->
+<div class="redirect-loading-modal" id="redirectLoadingModal">
+  <div class="redirect-title">
+    <span id="loadingDomain">example.com</span>へリダイレクト中<span id="loadingDots">.</span>
+  </div>
+  <div class="redirect-sub">
+    これには数秒かかることがあります<br>
+    ReFaceNet セキュリティ
+  </div>
+  <div class="redirect-character">
+    <img src="chara.png" alt="Redirect Character">
+  </div>
+</div>
+
 <!-- Privacy ダイアログ -->
 <div class="info-modal" id="privacyModal">
   <div class="info-box">
@@ -494,13 +541,14 @@
 
 <script>
   let targetRedirectUrl = "";
+  let displayDomain = "example.com";
 
   // --- ドメインとリダイレクト先の自動取得処理 ---
   window.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const redirectParam = urlParams.get('redirect');
 
-    let displayDomain = window.location.hostname || "example.com";
+    displayDomain = window.location.hostname || "example.com";
 
     if (redirectParam) {
       try {
@@ -600,11 +648,11 @@
       statusText.textContent = '人間であると確認されました';
       isVerified = true;
 
-      // --- パズル成功時に指定URLへリダイレクトする処理 ---
+      // --- パズル成功時にアニメーション画面を挟んでからリダイレクト ---
       if (targetRedirectUrl) {
         setTimeout(() => {
-          window.location.href = targetRedirectUrl;
-        }, 1000);
+          triggerRedirectAnimation(targetRedirectUrl);
+        }, 800);
       }
     } else {
       errorMsg.textContent = '位置が正しくありません。もう一度やり直してください。';
@@ -612,6 +660,29 @@
         initPuzzle();
       }, 1000);
     }
+  }
+
+  // リダイレクト中アニメーションの制御
+  function triggerRedirectAnimation(redirectUrl) {
+    const loadingModal = document.getElementById('redirectLoadingModal');
+    const loadingDomain = document.getElementById('loadingDomain');
+    const loadingDots = document.getElementById('loadingDots');
+
+    loadingDomain.textContent = displayDomain;
+    loadingModal.style.display = 'flex';
+
+    // ドット（. -> .. -> ...）をループさせるアニメーション
+    let dotCount = 0;
+    const dotInterval = setInterval(() => {
+      dotCount = (dotCount + 1) % 4;
+      loadingDots.textContent = '.'.repeat(dotCount || 1);
+    }, 400);
+
+    // 約2.8秒後に実際にリダイレクト実行
+    setTimeout(() => {
+      clearInterval(dotInterval);
+      window.location.href = redirectUrl;
+    }, 2800);
   }
 
   function openModal(modalId) {
